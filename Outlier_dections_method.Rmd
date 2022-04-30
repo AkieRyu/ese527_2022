@@ -1,0 +1,570 @@
+---
+title: 'Homework 2: Outlier Detection Review'
+author: "Patricio S. La Rosa"
+date: "2/23/2020"
+output:
+  word_document: default
+  html_document:
+    keep_md: yes
+    number_sections: yes
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Deep-Dive on Outlier detection Methods
+
+The purpose of this homework is to review several outlier detection methods made avialable through R packages. After completition of this homework you should be familiarized with standard methods for univariate and multivariate outlier detection methods. Application of these techniques to you project, as it applies, will be requested and will be considered as part of your mid-term report.  
+
+For more details on how to work with RmarkDown please read the following link:
+https://www.stat.cmu.edu/~cshalizi/rmarkdown/
+
+Please install the following packages prior to execute the R Markdown:
+install.packages(c("OutlierDetection","OutliersO3","outliers"))
+
+```{r}
+library(OutlierDetection)
+library(OutliersO3)
+library(outliers)
+```
+
+
+## Data Description:
+
+We will proceed now to summarize the classical Toy Example iris:
+
+The Fisher's or Anderson's iris data set gives the measurements in centimeters of the variables sepal length and width and petal length and width, respectively, for 50 flowers from each of 3 species of iris. The species are Iris setosa, versicolor, and virginica. For more information about the data set, execute 
+
+```{r iris}
+help(iris)
+summary(iris)
+head(iris)
+
+```
+
+
+## Problem 1: Expanding knowledge based on Outlier detection techniques
+The objective of this problem is to expose the student to different outlier detection techniques made available through R packages. The goal is to ensure that the main assumptions of these techniques are learned and the students is capable of articulating how the technique works statistically and in practice by using a toy example.
+
+As discussed in our lecture, outlier detection techniques can be classified as follows:
+
+1.-Statistical Tests based Approaches
+2. Depth-based Approaches
+3. Deviation-based Approaches
+4. Distance-based Approaches
+5. Density-based Approaches
+
+Your task is to complete this Rmarkdown with a technical summary describing each of the technique entitled below and use the toy example to describe its application.
+
+
+### 1.-Statistical Tests based Approaches:
+
+#### a) Dixon test (small sample size)
+
+Technical Summary:
+Dixon’s Q Test, often referred to simply as the Q Test, is a statistical test that is used for detecting outliers in a dataset.
+
+The test statistic for the Q test is as follows:
+
+Q = |xa – xb| / R
+
+where xa is the suspected outlier, xb is the data point closest to xa, and R is the range of the dataset. In most cases, xa is the maximum value in the dataset but it can also be the minimum value.
+
+It’s important to note that the Q test is typically performed on small datasets and the test assumes that the data is normally distributed. It’s also important to note that the Q test should only be conducted one time for a given dataset.
+
+References:
+- Dixon, W.J. (1950). Analysis of extreme values. Ann. Math. Stat. 21, 4, 488-506.
+- Dixon, W.J. (1951). Ratios involving extreme values. Ann. Math. Stat. 22, 1, 68-78.
+- Rorabacher, D.B. (1991). Statistical Treatment for Rejection of Deviant Values: Critical Values of Dixon Q Parameter and Related Subrange Ratios at the 95 percent Confidence Level. Anal. Chem.
+83, 2, 139-146.
+
+Application:
+
+```{r}
+X=iris[1:30,1]
+dixon.test(X,type=0,opposite=TRUE)
+
+```
+We see from the results that Q = 0.21429, p-value = 0.7572. Alternative hypothesis: lowest value 4.3 is an outlier.
+
+
+#### b) Normalscore (Deviation with respect to the mean)
+
+Technical Summary:
+The term normal score has two different meanings in statistics. One of them has to do with creating a single value that can be considered to come from a standard normal distribution (zero mean, unit variance). The second involves assigning surrogate values to data points in the dataset, the broad intent of which is to create data values, not approximations that could be interpreted as approximations to what might have been observed if the data came from a standard normal distribution.
+
+References:
+Schiffler, R.E (1998). Maximum Z scores and outliers. Am. Stat. 42, 1, 79-80.
+
+Application:
+
+```{r}
+X=iris[,1:4]
+#scores(X,type="z",prob=0.95)
+#Displaying first 10 scores
+scores(X,type="z",prob=0.95)[1:10,]
+
+```
+We can see the results in the table. And most of the results are FALSE, so these data has probability of outliers below 95%.
+
+
+
+#### c) Median Absolute Deviation (Deviation with respect to the median)
+
+Technical Summary:
+In statistics, the median absolute deviation (MAD) is a powerful measure of the univariate sample variability of quantitative data. It can also refer to a population parameter estimated by MAD calculated from a sample.
+
+References:
+Schiffler, R.E (1998). Maximum Z scores and outliers. Am. Stat. 42, 1, 79-80.
+
+```{r}
+X=iris[,1:4]
+#scores(X,type="mad",prob=0.95)
+#Displaying first 10 scores
+scores(X,type="mad",prob=0.95)[1:10,]
+
+```
+We can see the results in the table. And most of the results are FALSE, so these data has probability of outliers below 95%.
+
+
+
+#### d) Interquantile range score
+
+Technical Summary:
+In descriptive statistics, the interquartile range (IQR) is a measure of statistical dispersion. It is the spread of data or observations. IQR can also be called mid spread, mid 50% or H spread. It is defined as the difference between the 75th and 25th percentiles of the data.
+
+References:
+Schiffler, R.E (1998). Maximum Z scores and outliers. Am. Stat. 42, 1, 79-80.
+
+Note: check for the value of limit to be used. Below I inserted an arbitrary value
+```{r}
+X=iris[,1:4]
+#scores(X,type="iqr",lim=1)
+#Displaying first 10 scores
+scores(X,type="iqr",lim=1)[1:10,]
+```
+We can see the results in the table. And most of the results are FALSE, so these data has probability of outliers below 95%.
+
+
+
+### 2. Depth-based Approach:
+
+Technical Summary:
+Take a dataset and find its outliers using a depth-based approach. depthout uses the depthTools package to calculate the depth of observations and, based on a bootstrap cutoff, flag observations as outliers. Also reported are outliers labeled "outliers", which are bootstrapped estimates of the probability of an observation being an outlier. For bivariate data, it also displays a scatterplot of the data with flagged outliers.
+
+Reference:
+Johnson, T., Kwok, I., and Ng, R.T. 1998. Fast computation of 2-dimensional depth contours. In Proc. Int. Conf. on Knowledge Discovery and Data Mining (KDD), New York, NY. Kno
+
+Application:
+
+```{r}
+X=iris[,1:4]
+depthout(X,cutoff=0.05)
+
+
+
+```
+In the results, we can see the locations of Outlier are 14  23  38  42 110 118 119 132, the Outlier Probability are  0.76 0.80 0.61 0.92 1.00 1.00 0.99 0.97.
+
+
+### 3. Deviation-based Approaches
+Technical Summary:
+Distance-based outlier detection methods refer to the neighborhood of an object defined by a given radius. An object is considered an outlier if there are not enough other points in its neighborhood. A distance threshold, which can be defined as a reasonable neighborhood of an object.
+
+References:
+A. Arning, R. Agrawal, and P. Raghavan. A linear method for deviation detection in large
+databases. In Proc. 2nd International Conference on Knowledge Discovery and Data Mining,
+1996
+Chaudhary, A., Szalay, A. S., and Moore, A. W. 2002. Very fast outlier detection in large multidimensional data sets. In Proceedings of the ACM SIGMOD Workshop in Research Issues in Data Mining and Knowledge Discovery (DMKD). ACM Press
+
+
+### 4. Distance-based Approaches
+#### a) Outlier detection using Mahalanobis Distance
+Technical Summary:
+maha computes the Mahalanibis distance and observations, and labels observations as outliers based on a chi-square cutoff. Outliers marked as "outliers" are also reported based on their p-values. For bivariate data, it also displays a scatterplot of the data with flagged outliers.
+
+
+References:
+Barnett, V. 1978. The study of outliers: purpose and model. Applied Statistics, 27(3), 242–250.
+
+Application:
+```{r}
+X=iris[,1:4]
+maha(X,cutoff=0.9)
+```
+From the result, we know that in all data points of 4 dimensions. Data point in rows  15  16  33  42 101 107 115 118 123 132 135 136 137 142 146 are outliers and have probability of outliers greater or equal to 91%.
+
+
+#### b) Outlier detection using k Nearest Neighbours Distance method
+Technical Summary:
+nn computes the average knn distance of observations and, based on the bootstrap cutoff, flags observations as outliers. Also reported are outliers labeled "outliers", which are bootstrapped estimates of the probability of an observation being an outlier. For bivariate data, it also displays a scatterplot of the data with flagged outliers.
+
+
+References:
+Hautamaki, V., Karkkainen, I., and Franti, P. 2004. Outlier detection using k-nearest neighbour graph. In Proc. IEEE Int. Conf. on Pattern Recognition (ICPR), Cambridge, UK.
+
+Application:
+
+```{r}
+X=iris[,1:4]
+nn(X,k=4)
+```
+We see from the results that the data points in row 42 107 109 110 118 119 132 136 is an outlier. But data point 109，136 only has an probability of 62%, 54% to be the outliers. The rest of them have the probability greater or equal to 79%.
+
+
+
+#### c) Outlier detection using kth Nearest Neighbour Distance method
+Technical Summary:
+nnk computes kth nearest neighbour distance of an observation and based on the bootstrapped cutoff, labels an observation as outlier. Outlierliness of the labelled 'Outlier' is also reported and it is the bootstrap estimate of probability of the observation being an outlier. 
+
+
+References:
+Hautamaki, V., Karkkainen, I., and Franti, P. 2004. Outlier detection using k-nearest neighbour graph. In Proc. IEEE Int. Conf. on Pattern Recognition (ICPR), Cambridge, UK.
+
+Application:
+
+```{r}
+X=iris[,1:4]
+nnk(X,k=4)
+```
+We see from the results that the data points in row 42 107 109 110 118 119 132 136 is an outlier. But data point 109，136 only has an probability of 62%, 54% to be the outliers. The rest of them have the probability greater or equal to 79%.
+
+
+### 5. Density-based Approaches
+#### a) Outlier detection using Robust Kernal-based Outlier Factor(RKOF) algorithm
+Technical Summary:
+dens uses the DDoutlier package (based on the RKOF algorithm) to compute outliers for observations and, based on a bootstrap cutoff, flags observations as outliers. Also reported are outliers labeled "outliers", which are bootstrapped estimates of the probability of an observation being an outlier. For bivariate data, it also displays a scatterplot of the data with flagged outliers.
+
+
+Reference:
+Ester, M., Kriegel, H.-P., Sander, J., and Xu, X. 1996. A density-based algorithm for discovering clusters in large spatial databases with noise. In Proc. Int. Conf. on Knowledge Discovery and Data Mining (KDD), Portland, OR.
+
+Application:
+```{r}
+X=iris[,1:4]
+dens(X,k=4,C=1)
+```
+We see from the results that the data points in row 23  42  63  65 107 110, with all probability greater or equal to 85%.
+
+
+
+#### b) Outlier detection using genralised dispersion
+Technical Summary:
+disp computes the LOO dispersion matrix for each observation (dispersion matrix that disregards the current observation) and a fractional bootstrap cutoff (difference between the determinant of the LOO dispersion matrix and the det of the actual dispersion matrix), dividing the observations marked as outliers. Also reported are outliers labeled "outliers", which are bootstrapped estimates of the probability of an observation being an outlier. For bivariate data, it also displays a scatterplot of the data with flagged outliers.
+
+
+Reference:
+Jin, W., Tung, A., and Han, J. 2001. Mining top-n local outliers in large databases. In Proc. ACM SIGKDD Int. Conf. on Knowledge Discovery and Data Mining (SIGKDD), San Francisco, CA.
+
+Application:
+```{r}
+X=iris[,1:4]
+disp(X,cutoff=0.99)
+```
+We see from the results that the data points in row 42 107 115 118 132 135 142. However, point 107 has probability of outliers below 65%. The rest points are very likely to be outliers.
+
+
+
+### 6. Join assessment of outlier detection methods using techniques described under 2 to 5.
+
+Technical Summary: Given the abudance of method to define outliers a most recent strategy is to develop consensus outlier detection method. For example, rules such as majority vote can be applied when the techniques considered are essentially different. Per instance, see "Outlier detection" package function OutlierDetection which finds outlier observations for the data using different methods and labels an observation as outlier based on the intersection of all the methods considered. Using the function edit in R investigate the criterion being used and which techniques were considered. Also, proposed a modification to the function so to consider any technique to include any given number of techniques for outlier detection. Per instance, ensure that you can include the techniques covered under category 1.
+
+OutlierDetection uses different methods to find outlier observations of the data, and labels observations as outliers (intersection of all methods) based on all methods considered. For bivariate data, it also displays a scatterplot of the data with flagged outliers.
+
+
+
+Application:
+```{r}
+X=iris[,1:4]
+OutlierDetection(X)
+#Unveil the criterion used in OutlierDection function to define outliers using different methods
+#edit(OutlierDetection) # uncomment and execute this line
+```
+We see from the results that the data points in row 16  42 107 115 118 132 135 136 142.
+
+
+
+## Problem 2: 
+Apply the technique discussed above to the data set that you are using as part of the your problem. Please make sure to report the following:
+
+a) summary of you data sets
+Consider using summary function and use graphics to display your data
+
+```{r}
+data <- read.csv("C:\\Users\\andre\\Documents\\Tencent Files\\3386651047\\FileRecv\\2022 spring\\ESE527\\project\\data.csv")
+summary(data)
+
+```
+```{r}
+data <- na.omit(data)
+```
+
+
+```{r}
+plot(data$Asset.liability_Ratio, cex = 0.2, col = "cornflowerblue")
+```
+```{r}
+plot(data$Liquidity_Ratio, cex = 0.3, col = "cornflowerblue")
+```
+```{r}
+plot(data$EBIT, cex = 0.4, col = "cornflowerblue")
+```
+```{r}
+plot(data$Operating_Leverage, cex = 0.4, col = "cornflowerblue")
+```
+```{r}
+plot(data$Cost_Profit_Margin, cex = 0.4, col = "cornflowerblue")
+```
+```{r}
+plot(data$Current_Assets_Turnover_Ratio, cex = 0.3, col = "cornflowerblue")
+```
+
+
+
+
+
+
+b) Apply all the outlier detection methods described above to your data set as they fit
+
+
+
+
+Technical Summary:
+
+Performs several variants of Dixon test for detecting outlier in data sample.
+
+Dixon’s Q Test, often referred to simply as the Q Test, is a statistical test that is used for detecting outliers in a dataset.
+
+The test statistic for the Q test is as follows:
+
+Q = |xa – xb| / R
+
+where xa is the suspected outlier, xb is the data point closest to xa, and R is the range of the dataset. In most cases, xa is the maximum value in the dataset but it can also be the minimum value.
+
+It’s important to note that the Q test is typically performed on small datasets and the test assumes that the data is normally distributed. It’s also important to note that the Q test should only be conducted one time for a given dataset.
+
+```{r}
+data = na.omit(data)
+```
+
+
+```{r}
+data_X=data[2:30,3]
+
+dixon.test(data_X,type=0, opposite=TRUE)
+
+```
+We can see Q = 0.16667, p-value = 0.812. Alternative hypothesis: lowest value 9 is an outlier.
+
+
+
+
+Technical Summary:
+This function calculates normal, t, chi-square, IQR, and MAD scores for the given data.
+
+The term normal score has two different meanings in statistics. One of them has to do with creating a single value that can be considered to come from a standard normal distribution (zero mean, unit variance). The second involves assigning surrogate values to data points in the dataset, the broad intent of which is to create data values, not approximations that could be interpreted as approximations to what might have been observed if the data came from a standard normal distribution.
+
+
+```{r}
+
+data_X1=data[,3:21]
+View(scores(data_X1,type="z",prob=0.95)[1:70,])
+```
+We can see the results in the table. And most of the results are FALSE, so these data has probability of outliers below 95%.
+
+
+
+
+
+Technical Summary:
+This function calculates normal, t, chi-square, IQR, and MAD scores for the given data.
+
+In statistics, the median absolute deviation (MAD) is a powerful measure of the univariate sample variability of quantitative data. It can also refer to a population parameter estimated by MAD calculated from a sample.
+
+```{r}
+
+data_X2=data[,3:21]
+View(scores(data_X2,type="mad",prob=0.95)[1:70,])
+```
+We can see the results in the table. And most of the results are FALSE, so these data has probability of outliers below 95%.
+
+
+
+
+
+
+Technical Summary:
+This function calculates normal, t, chi-square, IQR, and MAD scores for the given data.
+
+In descriptive statistics, the interquartile range (IQR) is a measure of statistical dispersion. It is the spread of data or observations. IQR can also be called mid spread, mid 50% or H spread. It is defined as the difference between the 75th and 25th percentiles of the data.
+
+```{r}
+
+data_X3=data[,3:21]
+View(scores(data_X3,type="iqr",lim=1)[1:10,])
+```
+We can see the results in the table. And most of the results are FALSE, so these data has probability of outliers below 95%.
+
+
+
+
+
+
+
+Technical Summary:
+
+Take a dataset and find its outliers using a depth-based approach. depthout uses the depthTools package to calculate the depth of observations and, based on a bootstrap cutoff, flag observations as outliers. Also reported are outliers labeled "outliers", which are bootstrapped estimates of the probability of an observation being an outlier. For bivariate data, it also displays a scatterplot of the data with flagged outliers.
+
+```{r}
+
+data_X4=data[2:500,3:32]
+depthout(data_X4,cutoff=0.05)
+```
+In the results, we can see the locations of Outlier are 2  13  18  48  60 102 120 124 125 127 128 130 135 203 247 282 294 296 299 341, the Outlier Probability are 0.90 0.99 0.44 1.00 0.50 1.00 1.00 0.98 1.00 0.66 0.99 0.78 0.92 1.00 1.00 0.71 0.55 0.95 0.85 1.00.
+
+
+
+
+
+
+Technical Summary:
+
+maha computes the Mahalanibis distance and observations, and labels observations as outliers based on a chi-square cutoff. Outliers marked as "outliers" are also reported based on their p-values. For bivariate data, it also displays a scatterplot of the data with flagged outliers.
+
+
+```{r}
+
+data_X5=data[2:300,3:6]
+maha(data_X5,cutoff=0.9)
+```
+From the result, we know that in all data points of 6 dimensions. Data point in rows  8  15  21  26  28  48  66  79  81 101 102 120 123 128 135 145 152 154 161 167 180 182 202 203 211 224 226 246 247 269 276 278 285 291 299 305 318 320 341 348 355 are outliers and have probability of outliers greater or equal to 95%.
+
+
+
+
+
+
+Technical Summary:
+nn computes the average knn distance of observations and, based on the bootstrap cutoff, flags observations as outliers. Also reported are outliers labeled "outliers", which are bootstrapped estimates of the probability of an observation being an outlier. For bivariate data, it also displays a scatterplot of the data with flagged outliers.
+
+
+```{r}
+data_X6=data[2:300,3:6]
+nn(data_X6,k=15)
+```
+We see from the results that the data points in row 2  76  85 104 114 137 139 140 200 235 239 241 242 is an outlier. But data point 2 only has an probability of 78% to be the outliers. The rest of them have the probability greater or equal to 84%.
+
+
+
+
+
+Technical Summary:
+nnk computes kth nearest neighbour distance of an observation and based on the bootstrapped cutoff, labels an observation as outlier. Outlierliness of the labelled 'Outlier' is also reported and it is the bootstrap estimate of probability of the observation being an outlier. 
+
+
+```{r}
+
+data_X7=data[2:300,3:20]
+nnk(data_X7,k=4)
+```
+We see from the results that the data points in row 15  21  23  48  76 102 118 152 177 203 221 247 276 315 321 341 355. And among them point 21 has the smallest probability as 68%. The rest of them are all beyond 75%.
+
+
+
+
+
+
+Technical Summary:
+dens uses the DDoutlier package (based on the RKOF algorithm) to compute outliers for observations and, based on a bootstrap cutoff, flags observations as outliers. Also reported are outliers labeled "outliers", which are bootstrapped estimates of the probability of an observation being an outlier. For bivariate data, it also displays a scatterplot of the data with flagged outliers.
+
+
+```{r}
+data_X8=data[2:300,3:20]
+dens(data_X8,k=10,C=1)
+```
+We see from the results that the data points in row 1   7   8   9  12  15  21 116 118 132 134 152 155 261 276 355, with all probability greater or equal to 89%.
+
+
+
+
+
+Technical Summary:
+disp computes the LOO dispersion matrix for each observation (dispersion matrix that disregards the current observation) and a fractional bootstrap cutoff (difference between the determinant of the LOO dispersion matrix and the det of the actual dispersion matrix), dividing the observations marked as outliers. Also reported are outliers labeled "outliers", which are bootstrapped estimates of the probability of an observation being an outlier. For bivariate data, it also displays a scatterplot of the data with flagged outliers.
+
+
+```{r}
+
+data_X9=data[2:300,3:20]
+disp(data_X9,cutoff=0.99)
+```
+We see from the results that the data points in row 76  89 109 125 221 222 223 227 235 236 244 247 261 264 265 275. However, point 109 and 275 has probability of outliers below 60% and point 236 is below 75%. The rest points are very likely to be outliers.\
+
+
+
+
+
+Technical Summary:
+OutlierDetection uses different methods to find outlier observations of the data, and labels observations as outliers (intersection of all methods) based on all methods considered. For bivariate data, it also displays a scatterplot of the data with flagged outliers.
+
+
+
+```{r}
+
+data_X10=data[,3:7]
+OutlierDetection(data_X10)
+```
+We see from the results that the data points in row 8  15  21  26  28  48  66  81 101 102 120 123 128 135 145 152 154 161 167 180 182 202 203 211 224 226 246 247 269 276 278 285 291 299 305 318 320 341 348 355.
+
+
+
+
+c) Report outlier based on consensus rule based on all the techniques that applied to your data sets.
+
+Dixon test for outliers:
+We can see Q = 0.16667, p-value = 0.812, alternative hypothesis: lowest value 9 is an outlier.
+
+
+z:
+We can see the results in the table. And most of the results are FALSE, so these data has probability of outliers below 95%.
+
+mad:
+We can see the results in the table. And most of the results are FALSE, so these data has probability of outliers below 95%.
+
+iqr:
+We can see the results in the table. And most of the results are FALSE, so these data has probability of outliers below 95%.
+
+depthout:
+In the results, we can see the locations of Outlier are 2  13  18  48  60 102 120 124 125 127 128 130 135 203 247 282 294 296 299 341, the Outlier Probability are 0.90 0.99 0.44 1.00 0.50 1.00 1.00 0.98 1.00 0.66 0.99 0.78 0.92 1.00 1.00 0.71 0.55 0.95 0.85 1.00.
+
+maha:
+From the result, we know that in all data points of 6 dimensions. Data point in rows  8  15  21  26  28  48  66  79  81 101 102 120 123 128 135 145 152 154 161 167 180 182 202 203 211 224 226 246 247 269 276 278 285 291 299 305 318 320 341 348 355 are outliers and have probability of outliers greater or equal to 95%.
+
+nn:
+We see from the results that the data points in row 15  21  23  29  48  76 102 118 152 203 247 276 315 321 341 355 is an outlier. But data point 29 only has an probability of 69% to be the outliers. The rest of them have the probability greater or equal to 84%.
+
+nnk:
+We see from the results that the data points in row 15  21  23  48  76 102 118 152 177 203 221 247 276 315 321 341 355. And among them point 21 has the smallest probability as 68%. The rest of them are all beyond 75%.
+
+dens:
+We see from the results that the data points in row 1   7   8   9  12  15  21 116 118 132 134 152 155 261 276 355, with all probability greater or equal to 89%.
+
+disp:
+We see from the results that the data points in row 8  15  21  48 102 120 128 135 145 152 154 203 247 269 276 278 341 348 355. However, point 128 and 135 has probability of outliers below 60% and point 355 is below 67%. The rest points are very likely to be outliers.
+
+OutlierDetection:
+We see from the results that the data points in row 8  15  21  26  28  48  66  81 101 102 120 123 128 135 145 152 154 161 167 180 182 202 203 211 224 226 246 247 269 276 278 285 291 299 305 318 320 341 348 355.
+
+
+
+
+
+
+
+
+
+
+
+
+
